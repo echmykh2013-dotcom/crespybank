@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<title>Crespy Bank</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14263f">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Serif:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f3f1ec;--card:#fff;--ink:#14263f;--mute:#6b7686;--line:#e0dcd2;--gold:#b9821a;--goldbg:#fbf3df;--ok:#1f8a5b;--bad:#c9443b;--head:#14263f;--headink:#f3f1ec;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#0c1522;--card:#13233a;--ink:#e9edf3;--mute:#93a1b4;--line:#243652;--gold:#e0a93a;--goldbg:#2a2412;--ok:#3ecb8b;--bad:#ff6b62;--head:#0a111c;--headink:#e9edf3}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+header{background:var(--head);color:var(--headink)}
+.top{max-width:980px;margin:0 auto;padding:14px 16px 8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font:700 20px "IBM Plex Serif",Georgia,serif;letter-spacing:.3px}.brand span{color:var(--gold)}
+.bal{font:700 22px "IBM Plex Serif",Georgia,serif;color:var(--gold)}
+nav{max-width:980px;margin:0 auto;display:flex;overflow-x:auto;padding:0 8px}
+nav button{background:none;border:0;border-bottom:3px solid transparent;color:var(--headink);opacity:.65;padding:10px 14px;font:inherit;font-weight:500;cursor:pointer;white-space:nowrap}
+nav button.on{opacity:1;border-color:var(--gold)}
+main{max-width:980px;margin:0 auto;padding:16px 16px 80px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.hero{background:linear-gradient(135deg,var(--head),#1d3a62);color:var(--headink);border:0}
+.hero .big{font:700 40px "IBM Plex Serif",Georgia,serif;color:#f1c561;line-height:1.1}
+h2{font-size:16px;margin:0 0 10px}h3{font-size:13px;margin:14px 0 6px;color:var(--mute);font-weight:500}
+.sub{color:var(--mute);font-size:13px}.hero .sub{color:#b9c6d8}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+input,select,textarea{width:100%;padding:10px;margin:3px 0 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px}
+button{font:inherit}
+.b{padding:10px 14px;border:0;border-radius:8px;background:var(--gold);color:#fff;font-weight:700;cursor:pointer}
+.b.alt{background:none;border:1px solid var(--line);color:var(--ink)}
+.b:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.quest{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:12px 0}.quest:last-child{border:0}
+.bar{height:6px;border-radius:3px;background:var(--line);margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--gold)}
+.tag{display:inline-block;background:var(--goldbg);color:var(--gold);border-radius:20px;padding:1px 10px;font-weight:700;font-size:13px}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad)}
+.log div{padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ov{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}.ov.on{display:flex}
+.ov .card{width:100%;max-width:380px;margin:0;text-align:center}.ov .card.l{text-align:left}
+#msg{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;z-index:40}
+#msg.show{opacity:1}
+.lk{color:var(--gold);font-weight:700}
+</style>
+</head>
+<body>
+<div id="auth" class="ov"><div class="card l">
+  <div class="brand" style="color:var(--ink);margin-bottom:12px">Crespy <span>Bank</span></div>
+  <div id="authForm">
+    <input id="aE" type="email" autocomplete="email" data-ip="email">
+    <input id="aP" type="password" autocomplete="current-password" data-ip="password">
+    <div class="row"><button class="b" id="aIn" data-i="signIn" style="flex:1"></button><button class="b alt" id="aUp" data-i="signUp"></button></div>
+  </div>
+  <div id="mfaForm" style="display:none"><p data-i="mfaT"></p><input id="mC" inputmode="numeric" maxlength="6" data-ip="code"><div class="row"><button class="b" id="mOk" data-i="confirm" style="flex:1"></button><button class="b alt" id="mOut" data-i="signOut"></button></div></div>
+  <div class="sub" id="aM" style="margin-top:10px"></div>
+</div></div>
+<div id="gate" class="ov"><div class="card"><div id="gI" style="font-size:44px"></div><h2 id="gT"></h2><p id="gM" class="sub" style="white-space:pre-line"></p><button class="b alt" id="gOut" data-i="signOut"></button></div></div>
+
+<header>
+  <div class="top">
+    <div class="brand">Crespy <span>Bank</span></div>
+    <div class="row"><span class="bal" id="hBal"></span>
+      <select id="sLang" style="width:auto;margin:0;padding:4px 8px;font-size:13px"><option value="uk">UK</option><option value="en">EN</option></select>
+      <button class="b alt" id="hOut" data-i="signOut" style="padding:4px 10px;font-size:13px;color:var(--headink);border-color:#ffffff40"></button></div>
+  </div>
+  <nav id="nav"><button data-t="bank" class="on" data-i="tBank"></button><button data-t="quests" data-i="tQuests"></button><button data-t="admin" id="navAdm" style="display:none" data-i="tAdmin"></button></nav>
+</header>
+<main>
+<section id="s-bank" class="on">
+  <div class="card hero"><div class="sub" data-i="balance"></div><div class="big" id="bBal"></div><div class="sub" data-i="balNote"></div></div>
+  <h3 data-i="topupT"></h3>
+  <div class="grid" id="games"></div>
+  <div class="card" style="margin-top:14px"><h2 data-i="history"></h2><div class="log" id="hist"></div></div>
+</section>
+<section id="s-quests">
+  <div class="card"><h2 data-i="tQuests"></h2><p class="sub" data-i="qNote"></p><div id="qList"></div></div>
+</section>
+<section id="s-admin">
+  <div class="card"><h2 data-i="aGrant"></h2><div class="grid">
+    <div><input id="gP" data-ip="pid"><input id="gA" type="number" step="any" data-ip="cgAmt"></div>
+    <div><input id="gN" maxlength="200" data-ip="note"><button class="b" id="gGo" data-i="aGrantBtn"></button></div></div></div>
+  <div class="card"><h2 data-i="aQuests"></h2><div id="aQL"></div><h3 data-i="aEdit"></h3>
+    <div class="grid"><div><input id="qId" data-ip="qid"><input id="qTi" data-ip="title"><input id="qDe" data-ip="descr"><input id="qRe" type="number" step="any" data-ip="reward"></div>
+    <div><select id="qKi"><option value="once">once</option><option value="daily">daily</option></select>
+      <select id="qMe"><option>trades_count</option><option>coins_created</option><option>friends_count</option><option>deals_done</option><option>mfa_enabled</option><option>capital</option><option>always</option></select>
+      <input id="qGo" type="number" step="any" data-ip="goal"><input id="qMi" type="number" data-ip="minAge"></div></div>
+    <label class="row"><input id="qAc" type="checkbox" checked style="width:auto;margin:0"> <span data-i="active"></span></label><div class="row" style="margin-top:8px"><button class="b" id="qSave" data-i="save"></button></div></div>
+  <div class="card"><h2 data-i="aGames"></h2><div id="aGL"></div><h3 data-i="aEdit"></h3>
+    <div class="grid"><div><input id="pgId" data-ip="gid"><input id="pgTi" data-ip="title"><input id="pgUrl" data-ip="url"></div>
+    <div><input id="pgRate" type="number" step="any" data-ip="rateIn"><input id="pgCap" type="number" step="any" data-ip="capIn"></div></div>
+    <label class="row"><input id="pgAc" type="checkbox" checked style="width:auto;margin:0"> <span data-i="active"></span></label><div class="row" style="margin-top:8px"><button class="b" id="pgSave" data-i="save"></button></div></div>
+</section>
+</main>
+<div id="msg" role="status"></div>
+<script>
+(()=>{'use strict';
+const SB_URL='https://ntvtguzyaexclvmaqxxs.supabase.co',SB_KEY='sb_publishable_OkdcjL4hqtlC8L3GVP9bEA_vzIhwZzG';
+const GAME_FALLBACK='https://crespygames.pp.ua';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const $=i=>document.getElementById(i);
+const esc=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const fm=n=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const cg=n=>Number(n).toFixed(2)+' CG';
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const D={uk:{signIn:'Увійти',signUp:'Реєстрація',email:'Email (той самий акаунт, що й у грі)',password:'Пароль',mfaT:'Введіть код 2FA',code:'Код із застосунку',confirm:'Підтвердити',signOut:'Вийти',
+tBank:'Банк',tQuests:'Квести',tAdmin:'Адмін',balance:'Баланс банку',balNote:'CG спільні для всіх ігор Crespy Games. Заробляйте їх за квести й поповнюйте ними ігри.',
+topupT:'Поповнити гру',rate:'Курс',cap:'Ліміт на добу',amtCg:'Скільки CG витратити',topBtn:'Поповнити',openGame:'Відкрити гру',topOk:'Гру поповнено',
+history:'Історія банку',noHist:'Операцій поки немає.',qNote:'Нагороди перевіряє сервер за вашим прогресом у грі.',claim:'Забрати',claimed:'Виконано ✓',prog:'Прогрес',noQ:'Квестів поки немає.',qOk:'Нагороду отримано',daily:'раз на добу',
+eAmt:'Введіть суму більше нуля.',eLow:'Недостатньо CG у банку.',eCap:'Денний ліміт поповнення вичерпано.',eQuest:'Квест ще не виконано.',eClaimed:'Нагороду вже отримано.',eNew:'Акаунт ще надто новий для цього квесту.',eFast:'Занадто швидко, зачекайте мить.',eMfa:'Потрібен код 2FA: увійдіть знову.',eNoAdm:'Немає доступу.',eNoPl:'Гравця з таким ID не знайдено.',eBad:'Некоректні дані.',
+checkMail:'Перевірте пошту й підтвердьте email, потім увійдіть.',banT:'Акаунт заблоковано',banDays:'Залишилось днів',banReason:'Причина',perm:'назавжди',maintT:'Технічна робота',maintD:'Банк тимчасово недоступний. Спробуйте пізніше.',offT:'Немає звʼязку із сервером',
+aGrant:'Видати або забрати CG',pid:'ID гравця',cgAmt:'CG (мінус = забрати)',note:'Нотатка',aGrantBtn:'Виконати',aQuests:'Квести',aEdit:'Створити або змінити (за id)',qid:'id (латиниця, цифри, _)',title:'Назва',descr:'Опис',reward:'Нагорода, CG',goal:'Мета (число)',minAge:'Мін. вік акаунта, годин',active:'Активний',save:'Зберегти',aGames:'Ігри банку',gid:'id гри',url:'Адреса сайту гри',rateIn:'Курс: ігрової валюти за 1 CG',capIn:'Ліміт CG на добу',done:'Готово'},
+en:{signIn:'Sign In',signUp:'Sign Up',email:'Email (same account as in the game)',password:'Password',mfaT:'Enter your 2FA code',code:'Code from app',confirm:'Confirm',signOut:'Sign Out',
+tBank:'Bank',tQuests:'Quests',tAdmin:'Admin',balance:'Bank balance',balNote:'CG are shared across all Crespy Games titles. Earn them with quests and top up games.',
+topupT:'Top up a game',rate:'Rate',cap:'Daily limit',amtCg:'How many CG to spend',topBtn:'Top up',openGame:'Open game',topOk:'Game topped up',
+history:'Bank history',noHist:'No operations yet.',qNote:'Rewards are verified by the server from your progress in the game.',claim:'Claim',claimed:'Done ✓',prog:'Progress',noQ:'No quests yet.',qOk:'Reward claimed',daily:'once a day',
+eAmt:'Enter an amount above zero.',eLow:'Not enough CG in the bank.',eCap:'Daily top-up limit reached.',eQuest:'Quest is not completed yet.',eClaimed:'Reward already claimed.',eNew:'Account is too new for this quest.',eFast:'Too fast, wait a moment.',eMfa:'2FA code required: sign in again.',eNoAdm:'No access.',eNoPl:'No player with this ID.',eBad:'Invalid data.',
+checkMail:'Check your email and confirm it, then sign in.',banT:'Account banned',banDays:'Days left',banReason:'Reason',perm:'permanent',maintT:'Maintenance',maintD:'The bank is temporarily unavailable. Please try again later.',offT:'No connection to the server',
+aGrant:'Give or take CG',pid:'Player ID',cgAmt:'CG (negative = take)',note:'Note',aGrantBtn:'Apply',aQuests:'Quests',aEdit:'Create or edit (by id)',qid:'id (latin, digits, _)',title:'Title',descr:'Description',reward:'Reward, CG',goal:'Goal (number)',minAge:'Min account age, hours',active:'Active',save:'Save',aGames:'Bank games',gid:'game id',url:'Game site URL',rateIn:'Rate: game currency per 1 CG',capIn:'CG limit per day',done:'Done'}};
+let LANG=(navigator.language||'uk').startsWith('en')?'en':'uk';
+try{const l=localStorage.getItem('cb_lang');if(l==='uk'||l==='en')LANG=l}catch(e){}
+const t=k=>D[LANG][k]||k;
+let USER=null,P=null,BK=null,QL=[],AQ=[],AG=[],GATE=null,tab='bank';
+const pre=new URLSearchParams(location.search).get('game')||'invest';
+let tm;function toast(x){const m=$('msg');m.textContent=x;m.classList.add('show');clearTimeout(tm);tm=setTimeout(()=>m.classList.remove('show'),3200)}
+const MAP=[['already claimed','eClaimed'],['not enough bank','eLow'],['daily cap','eCap'],['quest not done','eQuest'],['account too new','eNew'],['too fast','eFast'],['mfa required','eMfa'],['not admin','eNoAdm'],['player not found','eNoPl'],['bad amount','eBad'],['bad name','eBad']];
+function em(m){m=m||'';if(m.includes('banned')||m.includes('maintenance')){loadProfile();return m}for(const[k,v]of MAP)if(m.includes(k))return t(v);return m}
+/* act() with a short pause between actions: protects an honest player from accidental click spam */
+let pend=0,last=0,chain=Promise.resolve();
+function act(n,a){if(pend>=3)return Promise.resolve({error:{message:'too fast'}});pend++;
+  const p=chain.then(async()=>{const w=700-(Date.now()-last);if(w>0)await sleep(w);last=Date.now();
+    const r=await sb.rpc('act',{action:n,args:a});if(r.error)return r;if(r.data&&r.data.error)return{error:{message:r.data.error}};return{data:r.data&&r.data.data}}).finally(()=>{pend--});
+  chain=p.catch(()=>{});return p}
+function lang(){document.documentElement.lang=LANG;document.querySelectorAll('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));document.querySelectorAll('[data-ip]').forEach(e=>e.placeholder=t(e.dataset.ip));render()}
+function show(n){tab=n;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===n));document.querySelectorAll('section').forEach(x=>x.classList.toggle('on',x.id==='s-'+n));if(n==='admin')loadAdmin()}
+$('nav').onclick=e=>{const b=e.target.closest('button');if(b)show(b.dataset.t)};
+$('sLang').onchange=e=>{LANG=e.target.value;try{localStorage.setItem('cb_lang',LANG)}catch(x){}lang()};
+/* ---------- auth ---------- */
+async function auth(up){const email=$('aE').value.trim(),password=$('aP').value;$('aM').textContent='';
+  const r=up?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});
+  if(r.error)$('aM').textContent=r.error.message;else if(up&&!r.data.session)$('aM').textContent=t('checkMail')}
+$('aIn').onclick=()=>auth(false);$('aUp').onclick=()=>auth(true);
+$('mOk').onclick=async()=>{$('aM').textContent='';const f=await sb.auth.mfa.listFactors(),x=f.data&&f.data.totp&&f.data.totp[0];if(!x)return;
+  const ch=await sb.auth.mfa.challenge({factorId:x.id});if(ch.error){$('aM').textContent=ch.error.message;return}
+  const v=await sb.auth.mfa.verify({factorId:x.id,challengeId:ch.data.id,code:$('mC').value.trim()});if(v.error){$('aM').textContent=v.error.message;return}$('mC').value='';boot()};
+const out=async()=>{await sb.auth.signOut();location.reload()};
+$('mOut').onclick=out;$('hOut').onclick=out;$('gOut').onclick=out;
+async function boot(){const{data}=await sb.auth.getSession();USER=data.session&&data.session.user||null;
+  $('auth').classList.toggle('on',!USER);$('authForm').style.display='';$('mfaForm').style.display='none';
+  if(!USER)return;
+  const l=await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if(l.data&&l.data.nextLevel==='aal2'&&l.data.currentLevel!=='aal2'){$('authForm').style.display='none';$('mfaForm').style.display='';$('auth').classList.add('on');return}
+  await loadProfile();if(!GATE)loadAll()}
+sb.auth.onAuthStateChange((e)=>{if(e==='SIGNED_IN'||e==='SIGNED_OUT')boot()});
+/* ---------- gate: ban, maintenance ---------- */
+function gate(icon,title,msg){GATE=title;$('gI').textContent=icon;$('gT').textContent=title;$('gM').textContent=msg;$('gate').classList.add('on')}
+async function loadProfile(){const[p,s]=await Promise.all([sb.from('profiles').select('*').maybeSingle(),sb.from('app_settings').select('*')]);
+  if(p.error&&/fetch/i.test(p.error.message))return gate('📡',t('offT'),'');
+  P=p.data;if(!P)return;
+  $('navAdm').style.display=P.is_admin?'':'none';
+  if(P.frozen){const perm=!P.ban_until||P.ban_until==='infinity',end=perm?null:new Date(P.ban_until);
+    if(perm||end>new Date()){const d=perm?t('perm'):Math.max(1,Math.ceil((end-new Date())/864e5));return gate('🚫',t('banT'),`${t('banDays')}: ${d}\n${t('banReason')}: ${P.ban_reason||'—'}`)}}
+  const m=((s.data||[]).find(x=>x.key==='maintenance')||{}).value||{};
+  if(m.on&&!P.is_admin)return gate('🛠',t('maintT'),(m.msg?m.msg+'\n':'')+t('maintD'));
+  if(GATE){location.reload()}}
+/* ---------- data ---------- */
+async function loadAll(){const[o,q]=await Promise.all([sb.rpc('bank_overview'),sb.rpc('quests_list')]);
+  if(o.error)return toast(em(o.error.message));
+  BK=o.data;QL=q.data||[];render()}
+function render(){
+  $('hBal').textContent=BK?cg(BK.balance):'';$('bBal').textContent=BK?cg(BK.balance):'—';
+  const games=(BK&&BK.games)||[];
+  $('games').innerHTML=games.map(g=>`<div class="card" data-g="${esc(g.game)}" style="margin:0${g.game===pre?';border-color:var(--gold)':''}">
+    <h2>${esc(g.title)}</h2><div class="sub">${t('rate')}: 1 CG = <b>${fm(g.rate)}</b></div><div class="sub">${t('cap')}: ${(+g.used_today).toFixed(2)} / ${(+g.daily_cap).toFixed(2)} CG</div>
+    <input type="number" min="0" step="any" inputmode="decimal" id="in-${esc(g.game)}" placeholder="${t('amtCg')}">
+    <div class="sub" id="pv-${esc(g.game)}" style="min-height:20px"></div>
+    <div class="row"><button class="b" data-top="${esc(g.game)}">${t('topBtn')}</button>${g.url?`<a class="lk" href="${esc(g.url)}" target="_blank" rel="noopener">${t('openGame')} ↗</a>`:''}</div></div>`).join('');
+  $('hist').innerHTML=BK&&BK.ledger&&BK.ledger.length?BK.ledger.map(l=>`<div>${new Date(l.at).toLocaleString(LANG)} · <b class="${+l.delta>0?'ok':'bad'}">${+l.delta>0?'+':''}${(+l.delta).toFixed(2)} CG</b> · ${esc(l.kind)} ${esc(l.ref||'')} <span class="sub">${esc(l.note||'')}</span></div>`).join(''):`<div class="sub">${t('noHist')}</div>`;
+  $('qList').innerHTML=QL.length?QL.map(q=>{const pr=Math.min(+q.progress,+q.goal),pct=+q.goal>0?Math.min(100,pr/+q.goal*100):100;
+    return `<div class="quest"><div style="flex:1"><b>${esc(q.title)}</b> <span class="tag">+${(+q.reward).toFixed(2)} CG</span>${q.kind==='daily'?` <span class="sub">${t('daily')}</span>`:''}
+    <div class="sub">${esc(q.descr||'')}</div><div class="bar"><i style="width:${pct}%"></i></div><div class="sub">${t('prog')}: ${pr.toFixed(0)} / ${(+q.goal).toFixed(0)}</div></div>
+    ${q.claimed?`<span class="ok">${t('claimed')}</span>`:`<button class="b" data-q="${esc(q.id)}"${q.done?'':' disabled'}>${t('claim')}</button>`}</div>`}).join(''):`<div class="sub">${t('noQ')}</div>`}
+$('games').oninput=e=>{const i=e.target.id;if(!i.startsWith('in-'))return;const g=(BK.games||[]).find(x=>'in-'+x.game===i),v=parseFloat(e.target.value)||0;$('pv-'+g.game).textContent=v>0?'= '+fm(v*g.rate):''};
+$('games').onclick=async e=>{const b=e.target.closest('[data-top]');if(!b)return;const gid=b.dataset.top,v=parseFloat($('in-'+gid).value);
+  if(!(v>0&&isFinite(v)))return toast(t('eAmt'));const r=await act('bank_topup',{gid,amt:v});
+  if(r.error)return toast(em(r.error.message));toast(t('topOk'));loadAll()};
+$('qList').onclick=async e=>{const b=e.target.closest('[data-q]');if(!b)return;const r=await act('quest_claim',{qid:b.dataset.q});
+  if(r.error)return toast(em(r.error.message));toast(t('qOk'));loadAll()};
+/* ---------- admin ---------- */
+async function loadAdmin(){if(!P||!P.is_admin)return;const[q,g]=await Promise.all([sb.rpc('admin_quests'),sb.rpc('admin_bank_games')]);AQ=q.data||[];AG=g.data||[];
+  $('aQL').innerHTML=AQ.map(x=>`<div class="quest"><div><b>${esc(x.title)}</b> <span class="sub">${esc(x.id)} · ${esc(x.metric)} ≥ ${x.goal} · ${esc(x.kind)} · ${x.active?'on':'off'}</span></div><div class="row"><span class="tag">+${(+x.reward).toFixed(2)}</span><button class="b alt" data-eq="${esc(x.id)}">✎</button></div></div>`).join('');
+  $('aGL').innerHTML=AG.map(x=>`<div class="quest"><div><b>${esc(x.title)}</b> <span class="sub">${esc(x.game)} · 1 CG = ${x.rate} · ${x.daily_cap}/day · ${x.enabled?'on':'off'}</span></div><button class="b alt" data-eg="${esc(x.game)}">✎</button></div>`).join('')}
+$('aQL').onclick=e=>{const b=e.target.closest('[data-eq]');if(!b)return;const x=AQ.find(y=>y.id===b.dataset.eq);
+  $('qId').value=x.id;$('qTi').value=x.title;$('qDe').value=x.descr||'';$('qRe').value=x.reward;$('qKi').value=x.kind;$('qMe').value=x.metric;$('qGo').value=x.goal;$('qMi').value=x.min_age_hours;$('qAc').checked=x.active};
+$('aGL').onclick=e=>{const b=e.target.closest('[data-eg]');if(!b)return;const x=AG.find(y=>y.game===b.dataset.eg);
+  $('pgId').value=x.game;$('pgTi').value=x.title;$('pgUrl').value=x.url||'';$('pgRate').value=x.rate;$('pgCap').value=x.daily_cap;$('pgAc').checked=x.enabled};
+async function adm(fn,p){const r=await sb.rpc(fn,p);if(r.error){toast(em(r.error.message));return false}toast(t('done'));return true}
+$('gGo').onclick=async()=>{const a=parseFloat($('gA').value);if(!isFinite(a)||a===0)return toast(t('eAmt'));if(await adm('admin_bank_grant',{ppid:$('gP').value.trim(),amt:a,note:$('gN').value.trim()}))$('gA').value=''};
+$('qSave').onclick=async()=>{if(await adm('admin_quest_upsert',{qid:$('qId').value.trim(),qgame:'invest',qtitle:$('qTi').value.trim(),qdescr:$('qDe').value.trim(),qreward:parseFloat($('qRe').value)||0,qkind:$('qKi').value,qmetric:$('qMe').value,qgoal:parseFloat($('qGo').value)||1,qmin:parseInt($('qMi').value)||0,qactive:$('qAc').checked}))loadAdmin()};
+$('pgSave').onclick=async()=>{if(await adm('admin_bank_game_upsert',{gid:$('pgId').value.trim(),gtitle:$('pgTi').value.trim(),grate:parseFloat($('pgRate').value),gcap:parseFloat($('pgCap').value),genabled:$('pgAc').checked,gurl:$('pgUrl').value.trim()}))loadAdmin()};
+$('sLang').value=LANG;lang();boot();
+setInterval(()=>{if(USER&&!GATE&&tab!=='admin')loadAll()},30000);
+})();
+</script>
+</body>
+</html>
